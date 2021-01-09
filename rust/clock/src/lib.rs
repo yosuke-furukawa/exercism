@@ -1,15 +1,9 @@
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Clock {
     hours: i32,
     minutes: i32,
-}
-
-impl PartialEq for Clock {
-    fn eq(&self, other: &Clock) -> bool {
-        self.hours == other.hours && self.minutes == other.minutes
-    }
 }
 
 impl Eq for Clock {}
@@ -28,12 +22,12 @@ fn normalize(hours: i32, minutes: i32) -> (i32, i32) {
         m = m + 60;
     }
     if m.abs() >= 60 {
-        h = h + m / 60;
-        m = (60 + m % 60) % 60;
+        h = h + m.div_euclid(60);
+        m = m.rem_euclid(60);
     }
 
     if h.abs() >= 24 || h < 0 {
-        h = (24 + h % 24) % 24;
+        h = h.rem_euclid(24);
     }
     (h, m)
 }
