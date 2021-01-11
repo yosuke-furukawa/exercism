@@ -4,14 +4,23 @@ pub fn anagrams_for<'a>(word: &str, possible_anagrams: &[&'a str]) -> HashSet<&'
     let mut result: HashSet<&'a str> = HashSet::new();
     let lowword = word.to_string().to_lowercase();
     let mut target: Vec<char> = lowword.chars().collect();
-    target.sort_unstable_by(|a, b| a.to_string().cmp(&b.to_string()));
+    target.sort_unstable();
 
     for anagram in possible_anagrams {
-        let lowanagram = anagram.to_string().to_lowercase();
+        if anagram.len() != word.len() {
+            continue;
+        }
+
+        let lowanagram = anagram.to_lowercase();
+
+        if lowanagram == lowword {
+            continue;
+        }
+
         let mut chars: Vec<char> = lowanagram.chars().collect();
-        chars.sort_unstable_by(|a, b| a.to_string().cmp(&b.to_string()));
+        chars.sort_unstable();
         
-        if lowword != lowanagram && target == chars {
+        if target == chars {
             result.insert(*anagram);
         }
     }
