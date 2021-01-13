@@ -8,45 +8,25 @@ pub enum Comparison {
     Unequal,
 }
 
-fn is_include<T: PartialEq + Clone>(small: Vec<T>, large: Vec<T>) -> bool {
-    let first = small.first().unwrap();
-    for (i, l) in large.iter().enumerate() {
-        if l == first {
-            let t = large.get(i..i + small.len()).unwrap_or(&[]).to_vec();
-            if t == small {
-                return true;
-            }
+fn is_include<T: PartialEq>(small: &[T], large: &[T]) -> bool {
+    for v in large.windows(small.len()) {
+        if small == v {
+            return true;
         }
     }
     false
 }
 
-pub fn sublist<T: PartialEq + Clone>(_first_list: &[T], _second_list: &[T]) -> Comparison {
+pub fn sublist<T: PartialEq>(_first_list: &[T], _second_list: &[T]) -> Comparison {
     if _first_list == _second_list {
         return Comparison::Equal;
     }
 
-    if _first_list.len() < _second_list.len() {
-        if _first_list.len() == 0 {
-            return Comparison::Sublist;
-        }
-        if is_include(_first_list.to_vec(), _second_list.to_vec()) {
-            return Comparison::Sublist;
-        } else {
-            return Comparison::Unequal;
-        }
+    match (_first_list, _second_list) {
+        (_list1, _list2) if _list1.len() == 0 => Comparison::Sublist,
+        (_list1, _list2) if is_include(_list1, _list2) => Comparison::Sublist,
+        (_list1, _list2) if _list2.len() == 0 => Comparison::Superlist,
+        (_list1, _list2) if is_include(_list2, _list1) => Comparison::Superlist,
+        _ => Comparison::Unequal,
     }
-
-    if _first_list.len() > _second_list.len() {
-        if _second_list.len() == 0 {
-            return Comparison::Superlist;
-        }
-        if is_include(_second_list.to_vec(), _first_list.to_vec()) {
-            return Comparison::Superlist;
-        } else {
-            return Comparison::Unequal;
-        }
-    }
-
-    return Comparison::Unequal;
 }
