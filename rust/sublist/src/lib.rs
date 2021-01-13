@@ -8,11 +8,11 @@ pub enum Comparison {
     Unequal,
 }
 
-fn is_include<T: PartialEq+Clone>(small: Vec<T>, large: Vec<T>) -> bool {
+fn is_include<T: PartialEq + Clone>(small: Vec<T>, large: Vec<T>) -> bool {
     let first = small.first().unwrap();
     for (i, l) in large.iter().enumerate() {
         if l == first {
-            let t = large.get(i..i+small.len()).unwrap_or(&[]).to_vec();
+            let t = large.get(i..i + small.len()).unwrap_or(&[]).to_vec();
             if t == small {
                 return true;
             }
@@ -21,7 +21,7 @@ fn is_include<T: PartialEq+Clone>(small: Vec<T>, large: Vec<T>) -> bool {
     false
 }
 
-pub fn sublist<T: PartialEq+Clone>(_first_list: &[T], _second_list: &[T]) -> Comparison {
+pub fn sublist<T: PartialEq + Clone>(_first_list: &[T], _second_list: &[T]) -> Comparison {
     if _first_list == _second_list {
         return Comparison::Equal;
     }
@@ -36,7 +36,6 @@ pub fn sublist<T: PartialEq+Clone>(_first_list: &[T], _second_list: &[T]) -> Com
             return Comparison::Unequal;
         }
     }
-
 
     if _first_list.len() > _second_list.len() {
         if _second_list.len() == 0 {
