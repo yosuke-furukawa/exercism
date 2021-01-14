@@ -1,26 +1,19 @@
-#[derive(PartialEq)]
-enum SPCHAR {
-    BRACKET,
-    BRACE,
-    PAREN,
-    NONE,
-}
-
 pub fn brackets_are_balanced(string: &str) -> bool {
-    let mut start = 0;
-    let mut end = string.len() - 1;
-    let chars = string.chars();
-    let mut current = SPCHAR::NONE;
-    let mut result = false;
-    while start < end {
-        if current == SPCHAR::NONE {
-            current = match chars[start] {
-                Some("[") => SPCHAR::BRACKET,
-                Some("{") => SPCHAR::BRACE,
-                Some("(") => SPCHAR::PAREN,
-                _ => SPCHAR::NONE,
+    let mut stack = vec![];
+    for c in string.chars() {
+        if c == '(' || c == '{' || c == '[' {
+            stack.push(c);
+        } else {
+            let valid = match c {
+                ')' => stack.pop() == Some('('),
+                '}' => stack.pop() == Some('{'),
+                ']' => stack.pop() == Some('['),
+                _ => true,
+            };
+            if !valid {
+                return false;
             }
         }
     }
-    result
+    stack.len() == 0
 }
