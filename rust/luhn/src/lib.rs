@@ -1,23 +1,13 @@
-fn digit(n: u32) -> u32 {
-    if n >= 9 {
-        return n - 9;
-    }
-    n
-}
-
 /// Check a Luhn checksum.
 pub fn is_valid(code: &str) -> bool {
-    let mut result = 0;
-    let code = code.replace(" ", "");
-    if code.len() <= 1 {
-        return false;
-    }
-    for (i, v) in code.chars().rev().enumerate() {
-        result += match (i, v) {
-            (_, v) if !v.is_numeric() => return false,
-            (i, v) if i % 2 == 1 => digit(v.to_digit(10).unwrap() * 2),
-            _ => v.to_digit(10).unwrap(),
-        };
-    }
-    result % 10 == 0
+    code.chars()
+        .rev()
+        .filter(|c| !c.is_whitespace())
+        .try_fold((0, 0), |(sum, c), d| {
+            d.to_digit(10)
+                .map(|n| if c % 2 == 1 { n * 2 } else { n })
+                .map(|n| if n > 9 { n - 9 } else { n })
+                .map(|n| (n + sum, c + 1))
+        })
+        .map_or(false, |(sum, count)| sum % 10 == 0 && count > 1)
 }
