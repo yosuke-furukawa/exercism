@@ -8,7 +8,7 @@ pub fn count(nucleotide: char, dna: &str) -> Result<usize, char> {
     }
     for c in dna.chars() {
         match c {
-            'A' | 'G' | 'C' | 'T' => *map.entry(c).or_insert(0 as usize) += 1,
+            'A' | 'G' | 'C' | 'T' => *map.entry(c).or_insert(0_usize) += 1,
             _ => return Err(c),
         }
     }
@@ -16,13 +16,12 @@ pub fn count(nucleotide: char, dna: &str) -> Result<usize, char> {
 }
 
 pub fn nucleotide_counts(dna: &str) -> Result<HashMap<char, usize>, char> {
-    let mut map = HashMap::new();
-    for x in ['A', 'G', 'C', 'T'].iter() {
-        map.insert(*x, 0);
-    }
+    let mut map: HashMap<char, usize> = vec![('A', 0), ('C', 0), ('G', 0), ('T', 0)]
+        .into_iter()
+        .collect();
     for c in dna.chars() {
         match c {
-            'A' | 'G' | 'C' | 'T' => *map.entry(c).or_insert(0 as usize) += 1,
+            'A' | 'G' | 'C' | 'T' => *map.entry(c).or_insert(0_usize) += 1,
             _ => return Err(c),
         }
     }
