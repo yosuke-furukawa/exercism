@@ -159,7 +159,7 @@ impl PartialOrd for Hand<'_> {
     }
 }
 
-pub fn winning_hands<'a>(hands: &[&'a str]) -> Option<Vec<&'a str>> {
+fn parse_hands<'a>(hands: &[&'a str]) -> Vec<Hand<'a>> {
     let mut results = Vec::with_capacity(hands.len());
     for hand in hands {
         let h: Vec<&str> = hand.split(' ').collect();
@@ -188,18 +188,25 @@ pub fn winning_hands<'a>(hands: &[&'a str]) -> Option<Vec<&'a str>> {
         }
         results.push(Hand { cards, hand });
     }
+    results
+}
+
+pub fn winning_hands<'a>(hands: &[&'a str]) -> Option<Vec<&'a str>> {
+    let mut hands = parse_hands(hands);
 
     // win if hand is only one.
-    if results.len() < 2 {
-        return Some(results.iter().map(|h| h.hand).collect());
+    if hands.len() == 1 {
+        return Some(hands.iter().map(|h| h.hand).collect());
     }
 
-    results.sort_unstable_by(|a, b| b.partial_cmp(&a).unwrap());
+    // sort hands to check winners
+    hands.sort_unstable_by(|a, b| b.partial_cmp(&a).unwrap());
     let mut winners = HashSet::new();
 
-    for candidates in results.windows(2) {
+    for candidates in hands.windows(2) {
         let comp = candidates[0].partial_cmp(&candidates[1]);
         if comp == Some(Ordering::Equal) {
+            // if same value hands are top, add 2 winners.
             winners.insert(candidates[0].hand);
             winners.insert(candidates[1].hand);
         } else {
