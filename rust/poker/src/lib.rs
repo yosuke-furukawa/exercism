@@ -40,6 +40,83 @@ struct Hand<'a> {
 }
 
 impl Hand<'_> {
+    fn check_straight_flush(&self, vector: Vec<Card>) -> (HandTypes, u8, Vec<Card>) {
+        let is_flush = (0..5).all(|i| vector[0].suit == vector[i].suit);
+        let is_straight = vector
+            .windows(2)
+            .all(|cards| cards[0].num + 1 == cards[1].num);
+        let is_ace_straight = vector
+            .windows(2)
+            .all(|cards| cards[0].num + 1 == cards[1].num || cards[0].num + 9 == cards[1].num);
+        if (is_straight || is_ace_straight) && is_flush {
+            if !is_straight && is_ace_straight {
+                return (
+                    HandTypes::StraightFlush,
+                    vector[vector.len() - 2].num,
+                    vector,
+                );
+            }
+            return (
+                HandTypes::StraightFlush,
+                vector[vector.len() - 1].num,
+                vector,
+            );
+        } else if is_straight || is_ace_straight {
+            if !is_straight && is_ace_straight {
+                return (HandTypes::Straight, vector[vector.len() - 2].num, vector);
+            }
+            return (HandTypes::Straight, vector[vector.len() - 1].num, vector);
+        } else if is_flush {
+            return (HandTypes::Flush, vector[vector.len() - 1].num, vector);
+        }
+        (HandTypes::HighCard, vector[vector.len() - 1].num, vector)
+    }
+    fn check_fourcard_fullhouse(
+        &self,
+        map: HashMap<u8, i32>,
+        vector: Vec<Card>,
+    ) -> (HandTypes, u8, Vec<Card>) {
+        for k in map.keys() {
+            if map.get(k) == Some(&4) {
+                return (HandTypes::FourCard, *k, vector);
+            } else if map.get(k) == Some(&3) {
+                return (HandTypes::FullHouse, *k, vector);
+            } else {
+                continue;
+            }
+        }
+        panic!("no such hands");
+    }
+    fn check_threecard_twopair(
+        &self,
+        map: HashMap<u8, i32>,
+        vector: Vec<Card>,
+    ) -> (HandTypes, u8, Vec<Card>) {
+        let mut two_pair_max = 0;
+        for k in map.keys() {
+            match map.get(k) {
+                Some(&v) if v == 3 => return (HandTypes::ThreeCard, *k, vector),
+                Some(&v) if v == 2 => {
+                    two_pair_max = two_pair_max.max(*k);
+                }
+                _ => continue,
+            }
+        }
+        (HandTypes::TwoPair, two_pair_max, vector)
+    }
+    fn check_onepair(
+        &self,
+        map: HashMap<u8, i32>,
+        vector: Vec<Card>,
+    ) -> (HandTypes, u8, Vec<Card>) {
+        for k in map.keys() {
+            match map.get(k) {
+                Some(&v) if v == 2 => return (HandTypes::OnePair, *k, vector),
+                _ => continue,
+            }
+        }
+        panic!("no such hands");
+    }
     fn check(&self) -> (HandTypes, u8, Vec<Card>) {
         let mut map = HashMap::new();
         let mut vector = vec![];
@@ -50,68 +127,18 @@ impl Hand<'_> {
         }
         vector.sort_unstable_by(|a, b| a.num.cmp(&b.num));
         if map.len() == 5 {
-            let is_flush = (0..5).all(|i| vector[0].suit == vector[i].suit);
-            let is_straight = vector
-                .windows(2)
-                .all(|cards| cards[0].num + 1 == cards[1].num);
-            let is_ace_straight = vector
-                .windows(2)
-                .all(|cards| cards[0].num + 1 == cards[1].num || cards[0].num + 9 == cards[1].num);
-            if (is_straight || is_ace_straight) && is_flush {
-                if !is_straight && is_ace_straight {
-                    return (
-                        HandTypes::StraightFlush,
-                        vector[vector.len() - 2].num,
-                        vector,
-                    );
-                }
-                return (
-                    HandTypes::StraightFlush,
-                    vector[vector.len() - 1].num,
-                    vector,
-                );
-            } else if is_straight || is_ace_straight {
-                if !is_straight && is_ace_straight {
-                    return (HandTypes::Straight, vector[vector.len() - 2].num, vector);
-                }
-                return (HandTypes::Straight, vector[vector.len() - 1].num, vector);
-            } else if is_flush {
-                return (HandTypes::Flush, vector[vector.len() - 1].num, vector);
-            } else {
-                return (HandTypes::HighCard, vector[vector.len() - 1].num, vector);
-            }
+            return Self::check_straight_flush(&self, vector);
         }
         if map.len() == 2 {
-            for k in map.keys() {
-                match map.get(k) {
-                    Some(&v) if v == 4 => return (HandTypes::FourCard, *k, vector),
-                    Some(&v) if v == 3 => return (HandTypes::FullHouse, *k, vector),
-                    _ => continue,
-                }
-            }
+            return Self::check_fourcard_fullhouse(&self, map, vector);
         }
 
         if map.len() == 3 {
-            let mut two_pair_max = 0;
-            for k in map.keys() {
-                match map.get(k) {
-                    Some(&v) if v == 3 => return (HandTypes::ThreeCard, *k, vector),
-                    Some(&v) if v == 2 => {
-                        two_pair_max = two_pair_max.max(*k);
-                    }
-                    _ => continue,
-                }
-            }
-            return (HandTypes::TwoPair, two_pair_max, vector);
+            return Self::check_threecard_twopair(&self, map, vector);
         }
 
         if map.len() == 4 {
-            for k in map.keys() {
-                match map.get(k) {
-                    Some(&v) if v == 2 => return (HandTypes::OnePair, *k, vector),
-                    _ => continue,
-                }
-            }
+            return Self::check_onepair(&self, map, vector);
         }
         (HandTypes::HighCard, 0, vector)
     }
@@ -169,8 +196,15 @@ pub fn winning_hands<'a>(hands: &[&'a str]) -> Option<Vec<&'a str>> {
         }
         results.push(Hand { cards, hand });
     }
+
+    // win if hand is only one.
+    if results.len() < 2 {
+        return Some(results.iter().map(|h| h.hand).collect());
+    }
+
     results.sort_unstable_by(|a, b| b.partial_cmp(&a).unwrap());
     let mut winners = HashSet::new();
+
     for candidates in results.windows(2) {
         let comp = candidates[0].partial_cmp(&candidates[1]);
         if comp == Some(Ordering::Equal) {
