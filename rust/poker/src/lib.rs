@@ -126,21 +126,13 @@ impl Hand<'_> {
             vector.push(card);
         }
         vector.sort_unstable_by(|a, b| a.num.cmp(&b.num));
-        if map.len() == 5 {
-            return Self::check_straight_flush(&self, vector);
+        match map.len() {
+            5 => Self::check_straight_flush(&self, vector),
+            4 => Self::check_onepair(&self, map, vector),
+            3 => Self::check_threecard_twopair(&self, map, vector),
+            2 => Self::check_fourcard_fullhouse(&self, map, vector),
+            _ => (HandTypes::HighCard, 0, vector),
         }
-        if map.len() == 2 {
-            return Self::check_fourcard_fullhouse(&self, map, vector);
-        }
-
-        if map.len() == 3 {
-            return Self::check_threecard_twopair(&self, map, vector);
-        }
-
-        if map.len() == 4 {
-            return Self::check_onepair(&self, map, vector);
-        }
-        (HandTypes::HighCard, 0, vector)
     }
 }
 
